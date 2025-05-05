@@ -1,0 +1,189 @@
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-image: url("landscape.jpg");
+    background-size: 37cm 25cm;
+   
+    color: #270606;
+    text-align: center;
+  }
+  .characters {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    color: #406800fb;
+    font-size: 2rem;
+  }
+  
+  .title {
+    margin-top: 30px;
+    font-size: 2.5rem;
+    letter-spacing: 2px;
+    color: #470b0bc9;
+  }
+  
+/* עיצוב לוח המשחק (grid 3x3) */
+
+  .battle-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 180px);
+    grid-template-rows: repeat(3, 150px);
+    gap: 6px;
+    justify-content: center;
+    margin: 40px auto;
+  }
+  
+  .cell {
+    background-color: #c6b9c931;
+    /* border: 2px solid #999; */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+  }
+  
+  .cell.taken {
+    cursor: default;
+  }
+  
+  .cell img {
+    max-width: 100%;
+    max-height: 100%;
+  } 
+  #minotaurButton {
+    background-color: #c6b9c931; 
+    cursor: pointer;
+    padding: 20px 20px 20px 20px;
+  }
+  #minotaurButton:hover {
+    transform: scale(1.80); 
+    background-color: rgb(252, 203, 143);
+  }
+  #centaurButton {
+    background-color: #c6b9c931; 
+    cursor: pointer;
+    padding: 20px 20px 20px 20px;
+  }
+  #centaurButton:hover {
+    transform: scale(1.80);
+    background-color: rgb(196, 144, 144);
+  } 
+  .characters {
+    display: flex;
+    flex-direction: column; /* Stack vertically */
+    align-items: center;    /* Center horizontally */
+    margin-top: 20px;
+    color: #406800fb;
+    font-size: 2rem;
+    gap: 10px; /* Optional spacing between items */
+  }
+  .characters {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .characters-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+  }
+  /* אפקט העלמות כאשר תא לא חלק מניצחון */
+
+  .cell.fade {
+  animation: fadeOut 0.5s forwards;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+/* תצוגת ניצחון קופצת */
+
+.winner-display {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 30px;
+    border-radius: 20px;
+    z-index: 999;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    animation: fadeIn 0.8s ease-in-out;
+  }
+  
+  
+  .winner-display img {
+    width: 150px;
+    height: 150px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+  
+  .winner-display img:hover {
+    transform: scale(1.2);
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+
+/* מסך פתיחה עם זאוס וברקים לבחירת מצב משחק */
+
+
+  .intro-screen {
+    position: relative;
+    width: 100vw; 
+    height: 80vh;
+    background-image: url('zeus-opening.png'); /* קישור לתמונת זאוס*/
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    overflow: hidden;
+  }
+  
+  .lightning-option {
+    position: absolute;
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+    cursor: pointer;
+    text-shadow: 0 0 10px yellow;
+    animation: flicker 1.2s infinite alternate;
+  }
+  
+  #vs-player {
+    top: 40%;
+    left: 15%;
+  }
+  
+  #easy-ai {
+    top: 55%;
+    left: 35%;
+  }
+  
+  #hard-ai {
+    top: 70%;
+    left: 60%;
+  }
+  
+  @keyframes flicker {
+    0% { opacity: 0.7; }
+    100% { opacity: 1; transform: scale(1.05); }
+  }
+  
