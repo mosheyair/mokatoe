@@ -1,0 +1,57 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mokatoe: Battle of Legends</title>
+  <link rel="stylesheet" href="Mokatoc.css" />
+</head>
+<body>
+  <header>
+    <h1 class="title">Mokatoe: Battle of Legends</h1>
+  </header>
+
+  <main>
+     <!-- אזור בחירת המשחק-->
+     <div class="intro-screen">
+        <img src="zeus.png" alt="Zeus" class="zeus-bg" />
+        <div class="lightning-option" id="vs-player">🗲 vs-player </div>
+        <div class="lightning-option" id="easy-ai">🗲 easy-ai</div>
+        <div class="lightning-option" id="hard-ai">🗲 hard-ai</div>
+      </div>
+      
+    <!-- אזור בחירת דמויות -->
+    <div class="characters"style="display: none;">
+        <h2>בחר את הדמות שלך</h2>
+        <div class="characters-buttons">
+          <button id="minotaurButton">
+            <img src="minotaur.png" alt="Minotaur" width="150" height="150" />
+          </button>
+          <button id="centaurButton">
+            <img src="centaur.png" alt="Centaur" width="150" height="150" />
+          </button>
+        </div>
+      </div>
+      
+    <!-- אזור הלוח (מוסתר בהתחלה) -->
+    <div class="battle-grid" style="display: none;">
+      <div class="cell" data-index="0"></div>
+      <div class="cell" data-index="1"></div>
+      <div class="cell" data-index="2"></div>
+      <div class="cell" data-index="3"></div>
+      <div class="cell" data-index="4"></div>
+      <div class="cell" data-index="5"></div>
+      <div class="cell" data-index="6"></div>
+      <div class="cell" data-index="7"></div>
+      <div class="cell" data-index="8"></div>
+    </div>
+    <div class="winner-display" style="display: none;"></div>
+
+  </main>
+
+  <footer>
+    <script src="Mokatoc.js" defer></script>
+  </footer>
+</body>
+</html>
