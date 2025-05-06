@@ -56,9 +56,16 @@ minotaurButton.addEventListener('click', () => {
   currentPlayer = "minotaur";
   characterSelection.style.display = 'none';
   battleGrid.style.display = 'grid';
-  if (gameMode.includes('ai')) {
-    setTimeout(hardAIMove, 500); // המחשב מתחיל לשחק אם זה AI
+  if (currentPlayer === "minotaur") {
+    setTimeout(() => {
+      if (gameMode === "easy-ai") {
+        easyAIMove();
+      } else if (gameMode === "hard-ai") {
+        hardAIMove();
+      }
+    }, 600);
   }
+  
 });
 
 // -----------------------------
@@ -87,9 +94,16 @@ cells.forEach(cell => {
     currentPlayer = currentPlayer === "centaur" ? "minotaur" : "centaur";
 
     // אם עכשיו תור המחשב – לקרוא לפונקציית AI
-    if (gameMode.includes('ai') && currentPlayer === "minotaur") {
-      setTimeout(hardAIMove, 600);
+    if (currentPlayer === "minotaur") {
+      setTimeout(() => {
+        if (gameMode === "easy-ai") {
+          easyAIMove();
+        } else if (gameMode === "hard-ai") {
+          hardAIMove();
+        }
+      }, 600);
     }
+    
   });
 });
 
@@ -160,29 +174,68 @@ function showWinnerButton(winner) {
 // -----------------------------
 
 function hardAIMove() {
-  // אם המרכז פנוי – לקחת אותו
-  if (!board[4]) return makeAIMove(4);
-
-  // אחרת – אם הפינה הראשונה פנויה
-  if (!board[0]) return makeAIMove(0);
-
-  // בדיקת מצבים בסיסיים לתגובה
-  const playerMoves = board.map((v, i) => v === "centaur" ? i : null).filter(i => i !== null);
-  const aiMoves = board.map((v, i) => v === "minotaur" ? i : null).filter(i => i !== null);
-
-  // אם שחקן במרכז והמחשב בפינה – לנסות לחסום
-  if (aiMoves.includes(4) && playerMoves.includes(0)) {
-    const blockIndex = [1, 3, 5, 7].find(i => !board[i]);
-    if (blockIndex !== undefined) return makeAIMove(blockIndex);
+  // 1. Try to win if possible
+  for (const combo of winConditions) {
+    const [a, b, c] = combo;
+    const values = [board[a], board[b], board[c]];
+    const aiCount = values.filter(v => v === "minotaur").length;
+    const emptyIndex = [a, b, c].find(i => board[i] === null);
+    if (aiCount === 2 && emptyIndex !== undefined) {
+      return makeAIMove(emptyIndex); // WIN
+    }
   }
 
-  // ברירת מחדל – בחר את התא הפנוי הראשון
+  // 2. Block if player is about to win
+  for (const combo of winConditions) {
+    const [a, b, c] = combo;
+    const values = [board[a], board[b], board[c]];
+    const playerCount = values.filter(v => v === "centaur").length;
+    const emptyIndex = [a, b, c].find(i => board[i] === null);
+    if (playerCount === 2 && emptyIndex !== undefined) {
+      return makeAIMove(emptyIndex); // BLOCK
+    }
+  }
+
+  // 3. Take center if available
+  if (!board[4]) return makeAIMove(4);
+
+  // 4. Take a corner
+  const corners = [0, 2, 6, 8];
+  const freeCorner = corners.find(i => !board[i]);
+  if (freeCorner !== undefined) return makeAIMove(freeCorner);
+
+  // 5. Take any empty cell
   const empty = board.findIndex(cell => cell === null);
   if (empty !== -1) makeAIMove(empty);
 }
 
 // אנו משתמשים בלוגיקה של hard גם למצב easy כרגע
-const easyAIMove = hardAIMove;
+function easyAIMove() {
+  // 1. Block if player is about to win
+  for (const combo of winConditions) {
+    const [a, b, c] = combo;
+    const values = [board[a], board[b], board[c]];
+    const playerCount = values.filter(v => v === "centaur").length;
+    const emptyIndex = [a, b, c].find(i => board[i] === null);
+    if (playerCount === 2 && emptyIndex !== undefined) {
+      return makeAIMove(emptyIndex); // BLOCK
+    }
+  }
+
+  // 2. Otherwise, choose a random NON-CENTER cell
+  const emptyIndices = board
+    .map((value, index) => value === null && index !== 4 ? index : null)
+    .filter(index => index !== null);
+
+  if (emptyIndices.length > 0) {
+    const randomIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+    makeAIMove(randomIndex);
+  } else if (board[4] === null) {
+    // fallback: if center is the only option left
+    makeAIMove(4);
+  }
+}
+
 
 // -----------------------------
 // ביצוע מהלך של המחשב
