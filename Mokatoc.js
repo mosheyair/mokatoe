@@ -1,24 +1,74 @@
 
+             //WebSocket
+                         //זוהי טכנולוגיה שמאפשרת לדפדפן לתקשר עם שרת בזמן אמת
+                        //היא מאפשרת לנו לשלוח ולקבל נתונים מהשרת מבלי לטעון מחדש את הדף
+                       //היא מאוד שימושית למשחקים מרובי משתתפים   
+let socket = null;    // מגגדיר משתנה שיהיה החיבור מול השרת (שורה17) וכרגע לא הוגדר החיבור
+let mySymbol = null;  // הסמל של האיקס או אפס עדיין לא נבחר
+let isMyTurn = false;  // משתנה שבודק אם תור השחקן הנוכחי או לא
+                                        //gameMode = מגדיר את מערכת הכללילים של המשחק - איך שחקנים מצתרפים, הפסקת משחק, רמות וכדומה
+function startGame(mode) {             //לאחר שהשחקן בחר את סוג המשחק (מולטי, קל, קשה), הפונקציה הזו תתחיל את המשחק
+  gameMode = mode;                    //מגדיר את מצב המשחק (שחקן מול שחקן, קל, קשה)
+  document.querySelector('.intro-screen').style.display = 'none';  //מסתיר את מסך הפתיחה (התמונה של זאוס עם כפתורי הבחירה).
+  characterSelection.style.display = 'flex';                      //מציג את המסך שבו בוחרים דמות: קנטאור או מינוטאור.
+  console.log("Game mode selected:", mode);                      //רושם הודעה בקונסול על סוג המשחק שנבחר.
+
+  if (mode === "player") {                                                  //אם המשחק הוא מול שחקן אחר (לא מחשב)
+    socket = new WebSocket('wss://www.mokafullstack.com/ws/');             //פעולה שמיצרת לנו את החיבור לשרת רק אם אנחנו משחקים מול שחקן אחר
+    socket.onopen = () => {                                               //פונקציה שמופעלת כשיש חיבור לשרת
+    console.log('🟢 Connected to multiplayer server');                  //רושם הודעה בקונסול שיש חיבור לשרת
+    };
+
+                                             //פונקצית חץ שבה אנחנו מגדירים מה יקרה כאשר מתקבלת הודעה מהשרת
+    socket.onmessage = (event) => {         // נכנסת ההודעה שהתקבלה מהשרת  event לתוך האוביקט
+      const msg = JSON.parse(event.data);  //הודעה שהתקבלה מהשרת מומרת לאוביקט ג'ייסון 
+                                          //הנתונים שנשלחים מהשרת מגיעים כטקסט (מחרוזת).
+                                         //כדי לעבוד עם הנתונים האלה, אנחנו צריכים להמיר אותם לאובייקט ג'ייסון.
+                                        //with json.parse we translate the string to an object that js can understand
+      console.log('📨 Received:', msg);// רושם את ההודעה שהתקבלה בקונסול
+
+      if (msg.type === 'start') {                //אם ההודעה מהשרת להתחיל
+        mySymbol = msg.symbol;                  //mySymbol מהשרת נשלח הסימן איקס או אפס ונשמר במשתנה  
+        isMyTurn = (mySymbol === 'X');         //אים השחקן הוא איקס אז זה התור שלו (איקס זה הקנטור)
+        console.log('🎮 You are', mySymbol);  // רושם בקונסולה את הסימן
+      }
+
+      if (msg.type === 'move') {
+        makeMove(msg.index, msg.symbol);
+        const winningCombo = getWinningCombo(msg.symbol);
+        if (winningCombo) {
+          highlightWinningCells(winningCombo, msg.symbol);
+          return;
+        }
+        isMyTurn = (msg.symbol !== mySymbol);
+      }
+    };
+  } else {
+                                // במצב משחק מול המחשב השחקן בוחר בקנטור
+    mySymbol = "centaur";
+    isMyTurn = true;
+  }
+}
+
 // -----------------------------
 // הגדרות כלליות
 // -----------------------------
 
-// כאן נגדיר את סוג המשחק (שחקן מול שחקן, מחשב קל, מחשב חכם)
-let gameMode = "player"; // player, easy-ai, hard-ai
+                       // כאן נגדיר את סוג המשחק (שחקן מול שחקן, קל, קשה)
+let gameMode = "player";                                                              // מצב משחק קל או קשה
+                    // הגדרת נתיב לתמונות ורכיבים 
+const centaurImg = "centaur.png";                                                   // תמונת הקנטאור
+const minotaurImg = "minotaur.png";                                                // תמונת המינוטאור
+const minotaurButton = document.getElementById('minotaurButton');                 // כפתור מינוטאור 
+const centaurButton = document.getElementById('centaurButton');                  // כפתור קנטאור
+const characterSelection = document.querySelector('.characters');               // מסך בחירת דמויות
+const battleGrid = document.querySelector('.battle-grid');                     // לוח הקרב
+const winnerDisplay = document.querySelector('.winner-display');              // אנימציה של המנצח
 
-// הגדרת נתיבי תמונות ואחיזות של רכיבים HTML
-const centaurImg = "centaur.png"; // תמונת הקנטאור
-const minotaurImg = "minotaur.png"; // תמונת המינוטאור
-const minotaurButton = document.getElementById('minotaurButton');
-const centaurButton = document.getElementById('centaurButton');
-const characterSelection = document.querySelector('.characters');
-const battleGrid = document.querySelector('.battle-grid');
-const winnerDisplay = document.querySelector('.winner-display');
-
-// כאן נתחיל את מצב השחקן הנוכחי והלוח
-let currentPlayer = "centaur";
-let board = Array(9).fill(null);
-const cells = document.querySelectorAll('.cell');
+        // כאן נתחיל את מצב השחקן הנוכחי והלוח
+let currentPlayer = "centaur";                                 // השחקן הנוכחי הוא קנטאור 
+let board = Array(9).fill(null);                              // נגדיר את הלוח כמשתנה ריק (לא תפוס)  
+const cells = document.querySelectorAll('.cell');            // כל התאים בלוח המשחק
 
 // הגדרת תנאי ניצחון
 const winConditions = [
@@ -35,12 +85,7 @@ document.getElementById('vs-player').onclick = () => startGame('player');
 document.getElementById('easy-ai').onclick = () => startGame('easy-ai');
 document.getElementById('hard-ai').onclick = () => startGame('hard-ai');
 
-function startGame(mode) {
-  gameMode = mode;
-  document.querySelector('.intro-screen').style.display = 'none';
-  characterSelection.style.display = 'flex'; // מציגים את בחירת הדמויות
-  console.log("Game mode selected:", mode);
-}
+
 
 // -----------------------------
 // שלב בחירת דמות
@@ -75,25 +120,40 @@ minotaurButton.addEventListener('click', () => {
 cells.forEach(cell => {
   cell.addEventListener('click', () => {
     const index = +cell.dataset.index;
+        if (!isMyTurn) return;                                                                // אם זה לא התור שלך אל תאפשר לעשות מהלך
+
     // אם התא תפוס או אם תור המחשב – לא לעשות כלום
     if (board[index] || (gameMode.includes('ai') && currentPlayer === "minotaur")) return;
 
-    makeMove(index); // ביצוע מהלך
+          makeMove(index, mySymbol);
 
-    const winningCombo = getWinningCombo(currentPlayer);
+    if (gameMode === "player") {
+      socket.send(JSON.stringify({ type: 'move', index, symbol: mySymbol }));
+      isMyTurn = false;
+    } else if (gameMode === "easy-ai") {
+      setTimeout(easyAIMove, 600);
+    } else if (gameMode === "hard-ai") {
+      setTimeout(hardAIMove, 600);
+    }
+
+ // ביצוע מהלך
+
+    const winningCombo = getWinningCombo(mySymbol);
+
     if (winningCombo) {
-      highlightWinningCells(winningCombo);
+      highlightWinningCells(winningCombo, mySymbol);
+
       return;
     }
 
     if (!board.includes(null)) {
-      showWinnerButton("draw"); // תיקו
+      showWinnerButton("draw");                               // תיקו
       return;
     }
 
-    currentPlayer = currentPlayer === "centaur" ? "minotaur" : "centaur";
+   
 
-    // אם עכשיו תור המחשב – לקרוא לפונקציית AI
+    //  עכשיו תור המחשב – לקרוא לפונקציית 
     if (currentPlayer === "minotaur") {
       setTimeout(() => {
         if (gameMode === "easy-ai") {
@@ -111,14 +171,18 @@ cells.forEach(cell => {
 // פעולת ביצוע מהלך
 // -----------------------------
 
-function makeMove(index) {
-  board[index] = currentPlayer;
+function makeMove(index, symbol) {
+  if (board[index]) return;
+
+  board[index] = symbol;
   cells[index].classList.add('taken');
   const img = document.createElement('img');
-  img.src = currentPlayer === "centaur" ? centaurImg : minotaurImg;
-  img.alt = currentPlayer;
+ img.src = symbol === "centaur" || symbol === "X" ? centaurImg : minotaurImg;
+
+  img.alt = symbol;
   cells[index].appendChild(img);
 }
+
 
 // -----------------------------
 // בדיקת תנאי ניצחון
@@ -132,7 +196,7 @@ function getWinningCombo(player) {
 // אפקטים לאחר ניצחון
 // -----------------------------
 
-function highlightWinningCells(winningCombo) {
+function highlightWinningCells(winningCombo, symbol) {
   cells.forEach(cell => cell.classList.add('taken'));
   cells.forEach((cell, index) => {
     if (!winningCombo.includes(index)) {
@@ -142,8 +206,10 @@ function highlightWinningCells(winningCombo) {
       }, index * 100);
     }
   });
-  setTimeout(() => showWinnerButton(currentPlayer), 1200);
+  setTimeout(() => showWinnerButton(symbol), 1200);
 }
+
+
 
 // -----------------------------
 // הצגת תוצאה בסיום המשחק
@@ -170,7 +236,7 @@ function showWinnerButton(winner) {
 }
 
 // -----------------------------
-// לוגיקה פשוטה של מחשב "חכם"
+// חתירה לניצחון של המחשב
 // -----------------------------
 
 function hardAIMove() {
@@ -185,7 +251,7 @@ function hardAIMove() {
     }
   }
 
-  // 2. Block if player is about to win
+  // חסימה של המחשב לרצף של שניים
   for (const combo of winConditions) {
     const [a, b, c] = combo;
     const values = [board[a], board[b], board[c]];
@@ -196,33 +262,33 @@ function hardAIMove() {
     }
   }
 
-  // 3. Take center if available
+  // אם המרכז פנוי תקח אותו
   if (!board[4]) return makeAIMove(4);
 
-  // 4. Take a corner
+  // שלב הבא תקח פינה של הלוח
   const corners = [0, 2, 6, 8];
   const freeCorner = corners.find(i => !board[i]);
   if (freeCorner !== undefined) return makeAIMove(freeCorner);
 
-  // 5. Take any empty cell
+  // תקח תא פנוי
   const empty = board.findIndex(cell => cell === null);
   if (empty !== -1) makeAIMove(empty);
 }
 
-// אנו משתמשים בלוגיקה של hard גם למצב easy כרגע
+// גם במצב קל אותה הלוגיקה של מצב קשה
 function easyAIMove() {
-  // 1. Block if player is about to win
+  // תחסום אם לשחקן יש רצף של שניים
   for (const combo of winConditions) {
     const [a, b, c] = combo;
     const values = [board[a], board[b], board[c]];
     const playerCount = values.filter(v => v === "centaur").length;
     const emptyIndex = [a, b, c].find(i => board[i] === null);
     if (playerCount === 2 && emptyIndex !== undefined) {
-      return makeAIMove(emptyIndex); // BLOCK
+      return makeAIMove(emptyIndex); 
     }
   }
 
-  // 2. Otherwise, choose a random NON-CENTER cell
+  // תבחר תא אקראי
   const emptyIndices = board
     .map((value, index) => value === null && index !== 4 ? index : null)
     .filter(index => index !== null);
@@ -255,11 +321,5 @@ function makeAIMove(index) {
     highlightWinningCells(winningCombo);
     return;
   }
-
-  if (!board.includes(null)) {
-    showWinnerButton("draw");
-    return;
-  }
-
   currentPlayer = "centaur";
 }
